@@ -9,13 +9,17 @@ import React from 'react';
 import type {PropsWithChildren} from 'react';
 import {
   SafeAreaView,
-  ScrollView,
   StatusBar,
   StyleSheet,
   Text,
   useColorScheme,
   View,
 } from 'react-native';
+import Animated, {
+  useAnimatedScrollHandler,
+  useAnimatedStyle,
+  useSharedValue,
+} from 'react-native-reanimated';
 
 import {
   Colors,
@@ -57,10 +61,25 @@ function Section({children, title}: SectionProps): React.JSX.Element {
 
 function App(): React.JSX.Element {
   const isDarkMode = useColorScheme() === 'dark';
+  const scrollProgressY = useSharedValue(0);
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
   };
+
+  const onScrollHandler = useAnimatedScrollHandler(event => {
+    scrollProgressY.value = event.contentOffset.y;
+  });
+
+  const rHeaderStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        {
+          translateY: scrollProgressY.value,
+        },
+      ],
+    };
+  });
 
   return (
     <SafeAreaView style={backgroundStyle}>
@@ -68,10 +87,16 @@ function App(): React.JSX.Element {
         barStyle={isDarkMode ? 'light-content' : 'dark-content'}
         backgroundColor={backgroundStyle.backgroundColor}
       />
-      <ScrollView
+      <Animated.ScrollView
         contentInsetAdjustmentBehavior="automatic"
+        onScroll={onScrollHandler}
+        scrollEventThrottle={16}
         style={backgroundStyle}>
         <Header />
+        <Animated.View
+          style={[{position: 'absolute', zIndex: 999}, rHeaderStyle]}>
+          <Text>hello world</Text>
+        </Animated.View>
         <View
           style={{
             backgroundColor: isDarkMode ? Colors.black : Colors.white,
@@ -91,7 +116,7 @@ function App(): React.JSX.Element {
           </Section>
           <LearnMoreLinks />
         </View>
-      </ScrollView>
+      </Animated.ScrollView>
     </SafeAreaView>
   );
 }
